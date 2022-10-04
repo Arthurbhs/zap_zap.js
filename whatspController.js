@@ -93,7 +93,7 @@ initEvents(){
 
 this.el.myPhoto.on('click', e =>{
     this.closeAllLeftPanel();
-    this.el.PanelEditProfile.show();
+    this.el.panelEditProfile.show();
     setTimeout(()=>{
         this.el.panelEditProfile.addClass('open');
     }, 300);
@@ -112,12 +112,12 @@ this.el.btnNewContact.on('click' , e =>{
 });
 this.el.btnClosePanelEditProfile.on('click' , e =>{
    
-this.el.PanelEditProfile.removeClass('open');
+this.el.panelEditProfile.removeClass('open');
 });
 
 this.el.btnClosePanelAddContact.on('click', e =>{
 
-    this.el.this.el.panelAddContact.removeClass('open'); 
+    this.el.panelAddContact.removeClass('open'); 
 
 });
        this.el.photoContainerEditProfile.on('click', e =>{
@@ -156,7 +156,7 @@ console.log(this.el.inputNamePanelEditProfile.innerHTML);
           this.el.btnAttach.on('click', e =>{
           e.stopPropagation();
         this.el.menuAttach.addClass('open');
-           document.addEventListener('click', this.closeMenuAttach);
+           document.addEventListener('click', this.closeMenuAttach.bind(this));
           });
 
             this.el.btnAttachPhoto.on('click', e=> {
@@ -164,18 +164,20 @@ console.log(this.el.inputNamePanelEditProfile.innerHTML);
 
             });
 
-            this.el.btnAttachPhoto.on('change', e=> {
-             [...this.el.inputPhoto.files].forEach(file =>{
+            this.el.inputPhoto.on('change', e=> {
+              console.log(this.el.inputPhoto.files);
+             [...this.el.inputPhoto.files].forEach(files =>{
+              console.log(files);
                     
 
              });
 
             });
 
-            this.el.btnAttachCamera.on('click', e=> {
+            this.el.btnAttachCamera.on('click', e => {
                this.closeAllMainPanel()
                 this.el.panelCamera.addClass('open');
-                this.elpanelCamera.css({
+                this.el.panelCamera.css({
                       'height':'calc(100% - 120px)'
 
                 });
@@ -183,18 +185,16 @@ console.log(this.el.inputNamePanelEditProfile.innerHTML);
 
             });
 
-            this.el.btnAttachCamera.on('click', e=> {
-                this.closeAllMainPanel()
-
-             
-             this.el.panelMessagesContainer.show();
+            this.el.btnClosePanelCamera.on('click', e=> {
+                this.closeAllMainPanel();
+                 this.el.panelMessagesContainer.show();
 
             });
 
             this.el.btnTakePicture.on('click', e=>{
+                 console.log('diga xiiiis!')
                  
-
-            })
+            });
 
             this.el.btnAttachDocument.on('click', e=> {
                 this.closeAllMainPanel()
@@ -240,12 +240,91 @@ this.el.panelMessagesContainer.show();
 this.closeRecordMicrophone();
 
             });
+            
 
             this.el.btnFinishMicrophone.on('click', e=>{
 this.closeRecordMicrophone();
                 
             });
-  
+
+
+            this.el.inputText.on('keypress', e => {
+         if(e.key === 'Enter' && !e.ctrlkey) {
+             e.preventDefault();
+             this.el.btnSend.click();
+
+         }
+           
+
+            });
+
+  this.el.inputText.on('keyup', e =>{
+    if(this.el.inputText.innerHTML.length){
+          this.el.inputPlaceholder.hide();
+           this.el.btnSendMicrophone.hide();
+           this.el.btnSend.show();
+    }
+    else{
+      this.el.inputPlaceholder.show();
+      this.el.btnSendMicrophone.show();
+      this.el.btnSend.hide();
+
+    }
+  });
+
+    this.el.btnSend.on('click', e =>{
+      console.log(this.el.inputText.innerHTML);
+
+    });
+    this.el.btnEmojis.on('click', e => {
+           this.el.panelEmojis.addClass('open');
+
+    });
+
+    this.el.panelEmojis.querySelectorAll('.emojiK').forEach(emoji =>{
+        emoji.on('click', e => {
+           
+
+           let img = this.el.imgEmojiDefault.cloneNode();
+
+           img.style.cssText = emoji.style.cssText;
+           img.dataset.unicode = emoji.dataset.unicode;
+           img.alt = emoji.dataset.unicode;
+
+           emoji.classList.forEach(name =>{
+             img.classList.add(name);
+
+           });
+
+           let cursor = window.getSelection();
+
+           if (!cursor.focusNode || !cursor.focusNode.id == 'input-text') {
+              this.el.inputText.focus();
+               cursor = window.getSelection();
+           }
+
+           let range = document.createRange();
+
+           range = cursor.getRangeAt(0);
+           range.deleteContents(); 
+
+           let frag = document.createDocumentFragment();
+
+           frag.appendChild(img);
+
+           range.insertNode(frag);
+ 
+           range.setStartAfter(img);
+
+           
+
+           this.el.inputText.dispatchEvent(new Event('keyup'));
+
+        });
+
+    })
+
+
 
 } 
 startRacordMicrophoneTime(){
@@ -278,7 +357,7 @@ this.el.panelCamera.removeClass('open');
 
 
  closeMenuAttach(e){
-document.removeEventListener('click', this.cioseMenuAttach);
+document.removeEventListener('click', this.closeMenuAttach);
 this.el.menuAttach.removeClass('open');
 
 
@@ -287,7 +366,7 @@ this.el.menuAttach.removeClass('open');
 
 closeAllLeftPanel(){
 
-    this.el.PanelEditProfile.hide();
+    this.el.panelEditProfile.hide();
     this.el.panelAddContact.hide();
 }
 }
