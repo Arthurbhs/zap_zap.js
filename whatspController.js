@@ -181,7 +181,7 @@ console.log(this.el.inputNamePanelEditProfile.innerHTML);
                       'height':'calc(100% - 120px)'
 
                 });
-               
+                     this._camera = new CameraController(this.el.videoCamera);
 
             });
 
@@ -230,10 +230,10 @@ this.el.panelMessagesContainer.show();
 
          });
 
-         this.el.recordMicrophone.on('click', e=>{
+         this.el.btnSendMicrophone.on('click', e=>{
                this.el.recordMicrophone.show();
                this.el.btnSendMicrophone.hide();
-               this.starRecordMicrophoneTime();
+             this.startRecordMicrophoneTime();
          });
 
             this.el.btnCancelMicrophone.on('click', e=>{
@@ -327,7 +327,7 @@ this.closeRecordMicrophone();
 
 
 } 
-startRacordMicrophoneTime(){
+startRecordMicrophoneTime(){
 
  let start = Date.now();
 
