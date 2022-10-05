@@ -1,0 +1,4 @@
+
+
+
+window.app = new whatspController();
