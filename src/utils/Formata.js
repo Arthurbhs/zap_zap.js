@@ -1,4 +1,4 @@
-export class Format{
+ class Formata{
 static getCamelCase(text){
 
 let div = document.createElement('div');
@@ -21,4 +21,23 @@ static toTime(duration){
     }   
 
 }
+
+static dateToTime(date, locale = 'pt-BR'){
+    
+    return date.toLocaleTimeString(locale, {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+
+}
+
+
+static timeStampToTime(timeStamp){
+
+return (timeStamp && typeof timeStamp.toDate === 'function') ?
+Formata.dateToTime(timeStamp.toDate()): '';
+ 
+}
+
 }

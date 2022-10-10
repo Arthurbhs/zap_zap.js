@@ -20,6 +20,9 @@ set email(value){this._data.email = value; }
 get photo(){return this._data.photo; }
 set photo(value){this._data.photo = value; }
 
+get chatId(){return this._data.chatId; }
+set chatId(value){this._data.chatId = value; }
+
 gerByid(id){
 
     return new Promise((s, f) => {
@@ -68,9 +71,9 @@ static findByEmail(email){
         .set(contact.toJSON());
 
     }
-    getContacts(){
+    getContacts(filter = ''){
     return new Promise((s, f) => {
-user.getContactRef(this.email).onSnapshot(docs => {
+user.getContactRef(this.email).where('name', '>=', filter).onSnapshot(docs => {
      let contacts = [];
      docs.forEach(doc => {
 

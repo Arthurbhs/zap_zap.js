@@ -4,6 +4,8 @@ import { DocumentPreviewController } from './DocumentPreviewController';
 import { MicrophoneController } from './MicrophoneController';
 import { Firebase } from './../utils/Firebase';
 import { user } from '../model/user';
+import { Chat } from '../model/Chat';
+import { Message } from '../model/message';
 
 export class whatspController{
 
@@ -63,7 +65,7 @@ this._firebase.initAuth()
    console.error(err);
 
 });
-
+}
 
 initcontacts() {
 
@@ -84,20 +86,10 @@ initcontacts() {
             }
 
             div.on('click', e => {
-                 this.el.activeName.innerHTML = contact.name;
-                 this.el.activeStatus.innerHTML = contact.status;
 
-                 if(contact.photo) {
-                 let img = this.el.activePhoto;
-                 img.src = contact.photo;
-                 img.show();
-                 }
-
-                 this.el.home.hide();
-                 this.el.main.css({
-                   display:'flex'
-
-                 });
+           
+              this.setActiveChat(contact);
+                 
 
 
             })
@@ -113,9 +105,91 @@ initcontacts() {
 
 }
 
+setActiveChat(contact){
+if (this._contactActive) {
+Message.getRef(this._contactActive.chatId).onSnapshot(() => {
+
+});
+
+}
+;
+this.contactAtive = contact;
+
+this.el.activeName.innerHTML = contact.name;
+                 this.el.activeStatus.innerHTML = contact.status;
+
+                 if(contact.photo) {
+                 let img = this.el.activePhoto;
+                 img.src = contact.photo;
+                 img.show();
+                 }
+
+                 this.el.home.hide();
+                 this.el.main.css({
+                   display:'flex'
+
+                 });
+                 this.el.panelMessagesContainer.inerHTML = '';
+                 Message.getRef(this._contactActive.chatId).
+                 orderBy('timeStamp').onSnapshot(docs => {
+
+              
+
+              let scrollTop = this.el.panelMessagesContainer.scrollTop;
+              let scrollTopMax = (this.el.panelMessagesContainer.scrollHeight 
+                - this.el.panelMessagesContainer.offsetHeight);
+                let autoScroll = (scrollTop >= scrollTopMax);
+
+              docs.forEach(doc => {
+              let data = doc.data();
+              data.id = doc.id;
+              
+              let message = new Message();
+                message.fromJSON(data);
+
+                let me = (data.from === this._user.email);
+             
+             if(!this.el.panelMessagesContainer.querySelector('#_' + data.id)){
+              
+                if(!me){
+              doc.ref.set({
+                status: 'read'
+              }, {
+             merge: true
+
+              });
+
+                }
+
+                let view = message.getViewElement(me);
+
+              this.el.panelMessagesContainer.appendChildI(view);
+
+             
+              }else if(!me){
+
+                
+               let msgEl = this.el.panelMessagesContainer.querySelector('#_' + data.id)
+                msgEl.querySelector('.message-status').innerHTML = message.getStatusViewElement()
+                .outerHTML;  
+               
+              }
+              
 
 
+              });
+              if(autoScroll){
+                this.el.panelMessagesContainer.scrollTop = 
+                (this.el.panelMessagesContainer.scrollHeight 
+                 - this.el.panelMessagesContainer.offsetHeight);}
+                 else{
+                  this.el.panelMessagesContainer.scrollTop = scrollTop;
+                 }
 
+             
+                 });
+
+                }
 loadElements(){
 this.el = {};
 document.querySelectorAll('[id]').forEach(Element =>{
@@ -196,7 +270,19 @@ Element.prototype.show = function(){
 
 
 initEvents(){
+  this.el.inputSearchContacts.on('keyup', e => {
+if (this.el.inputSearchContacts.value.length > 0){
 
+  this.el.inputSearchContactsPlaceholder.hide();
+
+}else{
+
+this.el.inputSearchContactsPlaceholder.show();
+}
+
+
+ this._user.getContacts(this.el.inputSearchContacts.value);
+});
 this.el.myPhoto.on('click', e =>{
     this.closeAllLeftPanel();
     this.el.panelEditProfile.show();
@@ -264,11 +350,23 @@ this.el.btnClosePanelAddContact.on('click', e =>{
 
           contact.on('datachange', data => {
                 if (data.name){
+
+            Chat.crateIfNotExists(this._user.email, contact.email).then(chat => {
+
+
+              contact.chatId = chat.id;
+
+               this._user.chatId = chat.id;
+
+                contact.addContact(this._user);
+
                   this._user.addContact(contact).then(() => {
+
                     this.el.btnClosePanelAddContact.click();
                    console.info('contato foi adicionado!');
 
                   }); 
+                });
                 }else{
                   console.error('Usuário não foi encontrado');
                 }
@@ -495,8 +593,13 @@ this.el.panelMessagesContainer.show();
   });
 
     this.el.btnSend.on('click', e =>{
-      console.log(this.el.inputText.innerHTML);
+Message.send(this._contactAcive.chatId,
+  this._user.email,
+  'text',
+  this.el.inputText.innerHTML);
 
+  this.el.inputText.innerHTML = '';
+  this.el.panelEmojis.removeClass('open');
     });
     this.el.btnEmojis.on('click', e => {
            this.el.panelEmojis.addClass('open');
