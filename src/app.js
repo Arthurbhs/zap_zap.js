@@ -1,4 +1,7 @@
-import { whatspController } from './controller/whatspController';
+import { WhatspController } from "./controller/whatspController";
 
 
-window.app = new whatspController();
+
+
+
+window.app = new WhatspController();

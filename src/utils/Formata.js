@@ -1,4 +1,4 @@
- class Formata{
+ export class Format{
 static getCamelCase(text){
 
 let div = document.createElement('div');

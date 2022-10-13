@@ -1,15 +1,17 @@
-import { Formata } from '../utils/Formata';
-import { CameraController } from '../controller/CameraController';
-import { DocumentPreviewController } from './DocumentPreviewController';
-import { MicrophoneController } from './MicrophoneController';
-import { Firebase } from './../utils/Firebase';
-import { user } from '../model/user';
+import { User } from '../model/user';
 import { Chat } from '../model/Chat';
 import { Message } from '../model/message';
+import { Base64 } from '../utils/Base64';
+import { Upload } from '../utils/Upload';
+import { Format } from '../utils/Formata';
+import { CameraControllerr } from './CameraControllerr';
+import { DocumentPreviewController } from './DocumentPreviewController';
+import { Firebase } from '../utils/Firebase';
+import { MicrophoneController } from './MicrophoneController';
 
-export class whatspController{
+export class WhatspController{
 
-constructor(){
+constructor(){ 
 
   this._firebase = new Firebase();
 
@@ -148,6 +150,8 @@ this.el.activeName.innerHTML = contact.name;
                 message.fromJSON(data);
 
                 let me = (data.from === this._user.email);
+
+                let view = message.getViewElement(me);
              
              if(!this.el.panelMessagesContainer.querySelector('#_' + data.id)){
               
@@ -161,12 +165,23 @@ this.el.activeName.innerHTML = contact.name;
 
                 }
 
-                let view = message.getViewElement(me);
+               
 
-              this.el.panelMessagesContainer.appendChildI(view);
+              this.el.panelMessagesContainer.appendChild(view);
 
              
-              }else if(!me){
+              }else {
+                
+
+                let parent = this.el.panelMessagesContainer.querySelector('#_' + data.id);
+                      parent.replaceChild(view, this.el.panelMessagesContainer.querySelector('#_' + data.id))
+                
+
+              }
+              
+              
+              
+              if(this.el.panelMessagesContainer.querySelector('#_' + data.id)){
 
                 
                let msgEl = this.el.panelMessagesContainer.querySelector('#_' + data.id)
@@ -174,8 +189,32 @@ this.el.activeName.innerHTML = contact.name;
                 .outerHTML;  
                
               }
-              
+                    if(message.type === 'contact') {
+                      div.querySelector('.btn-message-send').on('click', e => {
+                        Chat.crateIfNotExists(this._user.email, message.contact.email).then(chat => {
+                          
+                          let contact = new user(message.content);
 
+                          contact.on('datachange', data => {
+                                
+                            contact.chatId = chat.id;
+
+                            this._user.addContact(contact);
+            
+                            this._user.chatId = chat.id;
+             
+                             contact.addContact(this._user);
+             
+                              this.setActiveChat(contact);
+
+                          })
+
+                         
+                            });
+                       });
+
+                    }
+                
 
               });
               if(autoScroll){
@@ -194,7 +233,7 @@ loadElements(){
 this.el = {};
 document.querySelectorAll('[id]').forEach(Element =>{
 
- this.el[Formata.getCamelCase(Element.id)] = Element;
+ this.el[Format.getCamelCase(Element.id)] = Element;
 
 });
 
@@ -278,7 +317,7 @@ if (this.el.inputSearchContacts.value.length > 0){
 }else{
 
 this.el.inputSearchContactsPlaceholder.show();
-}
+}format
 
 
  this._user.getContacts(this.el.inputSearchContacts.value);
@@ -317,6 +356,24 @@ this.el.btnClosePanelAddContact.on('click', e =>{
 
        });
 
+       this.el.photoContainerEditProfile.on('change', e =>{
+
+       if (this.el.inputProfilePhoto.files.length > 0){
+        let file = this.el.inputProfilePhoto.files[0];
+           
+         Upload.send(file, this._user.email).then(snapshot => {
+          this._user.photo = snapshot.downloadURL;
+          this._user.save().then(() => {
+             
+            this.el.btnClosePanelEditProfile.click();
+
+          });
+         });
+
+       }
+
+       })
+
      this.el.inputNamePanelEditProfile.on('keypress', e=>{
                if(e.key === 'Enter'){
            e.preventDefault();
@@ -346,7 +403,7 @@ this.el.btnClosePanelAddContact.on('click', e =>{
 
       let formData = new FormData(this.el.formPanelAddContact);
 
-      let contact = new user(formData.get('email'));
+      let contact = new User(formData.get('email'));
 
           contact.on('datachange', data => {
                 if (data.name){
@@ -398,10 +455,11 @@ this.el.btnClosePanelAddContact.on('click', e =>{
             });
 
             this.el.inputPhoto.on('change', e=> {
-              console.log(this.el.inputPhoto.files);
+              
              [...this.el.inputPhoto.files].forEach(files =>{
-              console.log(files);
-                    
+              
+                   message.sendImage(this._contactActive.chatId, this._user.email, file);
+                   message.sendImage(this._contactActive.chatId, this._user.email, file);  
 
              });
 
@@ -414,7 +472,7 @@ this.el.btnClosePanelAddContact.on('click', e =>{
                       'height':'calc(100% - 120px)'
 
                 });
-                     this._camera = new CameraController(this.el.videoCamera);
+                     this._camera = new CameraControllerr(this.el.videoCamera);
 
             });
 
@@ -447,8 +505,52 @@ this.el.btnClosePanelAddContact.on('click', e =>{
             });
 
              this.el.btnSendPicture.on('click', e => {
-               console.log(this.el.pictureCamera.src);
 
+              this.el.bntSendPicture.disabled = true;
+               
+                let regex = /^data:(.+)png;base64,(.*)$/;
+                 let result = this.el.pictureCamera.src.match(regex);
+                  let mimeType = result[1];
+                  let ext = mimeType.split('/')[1];
+                  let filename = `camera${Date.now()}.${ext}`;
+
+                 let picture = new Image();
+                 picture.src = this.el.pictureCamera.src;
+                 picture.onload = e =>{
+                  let canvas = document.createElement('canvas');
+                  let context = canvas.getContext('2d');
+
+                  canvas.width = picture.width;
+                  canvas.height = picture.height;
+
+                  context.translate(picture.width, 0);
+                  context.scale(-1, 1);
+
+                  context.drawImage(picture, 0, 0, canvas.width, canvas.height);
+                  fetch(canvas.toDataURL(mimeType))
+                  .then(res => {return res.arrayBuffer(); })
+                  .then(buffer => { return new File([buffer], filename, {type: mimeType});})
+                  .then(file => {
+
+                        Message.sendImage(this._contactAcive.chatId, this._user.email, file);
+                       this.el.btnSendPicture.disable = false;
+                       this.claseAllMainPanel();
+                       this.el._camera.stop();
+                       this.el.btnReshootPanelCamera.hide();
+                       this.el.pictureCamera.hide();
+                       this.el.videoCamera.show();
+                       this.el.containerSendPicture.hide();
+                       this.el.containerTakePicture.show();
+                       this.el.panelMessagesContainer.show();
+
+                      });
+                 }
+
+
+                 
+                   
+
+                 
              });
 
 
@@ -521,17 +623,41 @@ this.el.panelMessagesContainer.show();
             });
 
             this.el.btnSendDocument.on('click', e=>{
+                    let file = this.el.inputDocument.files[0];
+                    let base64 = this.el.imgPanelDocumentPreview.src
+
+                    if(file.type === 'apllication/pdf') {
+                      Base64.toFile(base64).then(filePreview => {
+                      Message.sendDocument(this._contactActive.chatId,
+                        this._user.email, file, filePreview,
+                        this.el.infoPanelDocumentPreview.innerHTML);
+                      });
+                    }else{
+                      Message.sendDocument(this._contactActive.chatId,
+                        this._user.email, file);
+                    }
+                  this.el.btnAttachContact.click();
 
 
             });
 
             this.el.btnAttachContact.on('click', e=> {
-                  this.el.modalContacts.show();
+                 
+                  this._contactsController = new ContactsController(this._contactsController, this._user);
+                  
+                  this._contactsController.on('select', contact => {
+
+                    Message.sendContact(this._contactive.chatId,
+                      this._user.email,
+                      contact)
+                  })
+                 
+                  this._contactsController.open();
              
             });
 
             this.el.btnCloseModalContacts.on('click', e=>{
-
+                 this._contactsController.close();
                 this.el.modalContacts.hide();
             })
 
@@ -550,7 +676,7 @@ this.el.panelMessagesContainer.show();
               this._microphoneController.satrtRecorder();
              });
              this._microphoneController.on('recordTimer', timer => {
-               this.el.recordMicrophoneTimer.innerHTML = Formata.toTime(timer);
+               this.el.recordMicrophoneTimer.innerHTML = Format.toTime(timer);
              })
          });
 
@@ -562,10 +688,20 @@ this.el.panelMessagesContainer.show();
             
 
             this.el.btnFinishMicrophone.on('click', e=>{
-              this._microphoneController.stop();
+              this._microphoneController.on('recorded', (file, metadata) => {;
+             Message.sendAudio(
+              this._contactActive.chatId,
+              this._user.email,
+              file,
+              metadata,
+              this._user.photo
+             );
+
+              this._microphoneController.stopRecorder();
               this.closeRecordMicrophone();
                 
             });
+          });
 
 
             this.el.inputText.on('keypress', e => {

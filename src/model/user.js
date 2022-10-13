@@ -2,7 +2,7 @@ import { Firebase } from './../utils/Firebase';
 import { Model } from './Model';
 
 
-export class user extends Model{
+export class User extends Model{
 constructor(id){
 
 super();

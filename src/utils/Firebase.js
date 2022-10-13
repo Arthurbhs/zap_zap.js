@@ -8,7 +8,7 @@ constructor(){
         apiKey: "AIzaSyBkEtmptkIn0XiRALz2ETI1_-ErHpZ7mK4",
         authDomain: "zapzap-51fb6.firebaseapp.com",
         projectId: "zapzap-51fb6",
-        storageBucket: "zapzap-51fb6.appspot.com",
+        storageBucket: "gs://zapzap-51fb6.appspot.com",
         messagingSenderId: "960300567586",
         appId: "1:960300567586:web:795d522acd4312bc200e7b",
         measurementId: "G-2YPXYVYQKT"
