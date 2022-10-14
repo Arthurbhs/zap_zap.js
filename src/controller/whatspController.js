@@ -12,17 +12,69 @@ import { MicrophoneController } from './MicrophoneController';
 export class WhatspController{
 
 constructor(){ 
-
+this._active = true;
   this._firebase = new Firebase();
 
  this.initAuth(); 
- console.log('watspController ok');
  this.elementPrototype();
  
  this.loadElements(); 
  this.initEvents();  
+ this.checkNotifications();
  
 }
+checkNotifications(){
+
+if(typeof Notification === 'function'){
+
+  if (Notification.permission !== 'granted'){
+
+    this.el.alertNotificationPermission.show();
+
+  } else {
+
+          this.el.alertNotificationPermission.hide();
+
+  }
+  this.el.alertNotificationPermission.on('click', e => {
+
+       Notification.requestPermission(permission => {
+        if(permission === 'granted') {
+          this.el.alertNotificationPermission.hide();
+          console.info('notificações permitidas!')
+        }
+
+
+       });
+
+  });
+}
+  
+
+
+
+  }
+
+  notification(data){
+
+    if (Notification.permission === 'granted') {
+  
+      let n = new Notification(this._contactActive.name, {
+        icon: this._contactActive.photo,
+        body: data.content
+      });
+
+         let sound = new Audio('./audio/alert.mp3');
+         sound.currentTime = 0;
+         sound.play();
+
+      setTimeout(() => {
+
+     if (n) n.close();
+
+      }, 3000);
+    }
+  }
 
 initAuth(){
 
@@ -132,6 +184,9 @@ this.el.activeName.innerHTML = contact.name;
 
                  });
                  this.el.panelMessagesContainer.inerHTML = '';
+
+                 this._messagesRecived = [];
+
                  Message.getRef(this._contactActive.chatId).
                  orderBy('timeStamp').onSnapshot(docs => {
 
@@ -141,15 +196,25 @@ this.el.activeName.innerHTML = contact.name;
               let scrollTopMax = (this.el.panelMessagesContainer.scrollHeight 
                 - this.el.panelMessagesContainer.offsetHeight);
                 let autoScroll = (scrollTop >= scrollTopMax);
+               
 
               docs.forEach(doc => {
               let data = doc.data();
               data.id = doc.id;
               
               let message = new Message();
-                message.fromJSON(data);
+              message.fromJSON(data);
+              let me = (data.from === this._user.email);
 
-                let me = (data.from === this._user.email);
+              if(!me && this._messagesRecived.filter(id => { return ( id === data.id ) }).length === 0 ) {
+
+                   this.notification(data);
+                   this._messagesReceived.push(data.id);
+
+              }
+               
+
+                
 
                 let view = message.getViewElement(me);
              
@@ -309,6 +374,17 @@ Element.prototype.show = function(){
 
 
 initEvents(){
+    
+  window.addEventListener('focus', e=>{
+       this._active = true;
+
+  });
+
+  window.addEventListener('blur', e=>{
+    this._active = false;
+
+});
+
   this.el.inputSearchContacts.on('keyup', e => {
 if (this.el.inputSearchContacts.value.length > 0){
 
