@@ -1,7 +1,3 @@
-import { WhatspController } from "./controller/whatspController";
+import { WhatsAppController } from './controller/WhatsAppController.js';
 
-
-
-
-
-window.app = new WhatspController();
+window.app = new WhatsAppController();

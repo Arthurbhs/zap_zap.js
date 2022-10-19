@@ -1,44 +1,38 @@
-export class ClassEvent{
-constructor(){
-this._events = {
-     play: [
-        () => {
-         console.log('A');
+export class ClassEvent {
 
-        },
-       () => {
-         console.log('B');
+    constructor() {
 
-       }
+        this._events = {};
 
-     ]
+    }
 
-};
+    on(name, fn) {
 
-}
- on(eventName, fn){
+        if (!this._events[name]) this._events[name] = new Array();
 
- if (!this._events[eventName]) this._events[eventName] = new Array();
-  this._events[eventName].push(fn);
+        this._events[name].push(fn);
 
- }
-triggger(){
+    }
 
-let args = [...arguments];
-let eventName = args.shift();
+    trigger() {
 
-args.push(new Event(eventName));
+        let args = [...arguments];
+        let eventName = args.shift();
+        args.push(new Event(eventName));
 
-if (this._events[eventName] instanceof Array) {
+        if (this._events[eventName] instanceof Array) {
 
-this._events[eventName].forEach(fn => {
-  fn.apply(null, args);
+            this._events[eventName].forEach(fn => {
 
-})
+                fn.apply(null, args, {
+                    type: eventName,
+                    timeStamp: new Date().getTime()
+                });
 
+            });
 
-}
-}
+        }
 
+    }
 
 }
